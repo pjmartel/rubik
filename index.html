@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>A simple scene in three.js - PJM 2017 </title>
+    <script src="../libs/three.min.js"></script>
+    <script src="../libs/stats.min.js"></script>
+    <script src="../libs/OrbitControls.js"></script>
+    <script src="rubik.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+            background-color: #303030;
+            color : #eee ;
+        }
+        div.heading {
+          position : absolute ;
+          top : 10px ;
+          width : 100% ;
+          text-align: center ;
+          color : white ;
+        }
+        div.controls {
+        	position: absolute;
+          margin-top : 20px ;
+          right : 130px ;
+        	top: 50 ;
+        	padding: 0;
+        	max-width: 100%;
+        }
+        a {
+        	color: #ff7600;
+        	text-decoration: none;
+        }
+        #licontrols {
+        	position: absolute;
+          top : 50 ;
+        	margin-top : 10px ;
+        	list-style-type: none;
+        	margin: 10px;
+        	padding: 0;
+        	max-width: 100%;
+        }
+        li {
+        margin: 0 0 10px 0 ;
+      }
+
+      button {
+        color : green ;
+        width : 100px ;
+        font-size : 20px ;
+      }
+}
+
+
+
+    </style>
+</head>
+<body>
+  <div class="heading"><h2>Rubik's Cube Simulator</h2></div>
+  <div class="controls">
+  <ul id = "licontrols">
+  <li><button id="_shuffle">shuffle</button></li>
+  <li><button id="_reset">reset</button></li>
+  <li><button id="_solve">solve</button></li>
+  <li><button id="_axes">axes</button></li>
+  <li><button id="_help">help</button></li>
+  </ul>
+  </div>
+</body>
