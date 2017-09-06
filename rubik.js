@@ -516,7 +516,7 @@ function setupControlButtons() {
    helpButton.onclick = helpFunction ;
 }
 
-function readKeys() {
+function readKeys(event) {
   var keys = ["L","R","D","U","B","F"] ;
   var keyPressed ;
 
@@ -537,7 +537,7 @@ function readKeys() {
 }
 
 
-function blockRepeat() {
+function blockRepeat(event) {
     keyDown = false ;
 }
 
