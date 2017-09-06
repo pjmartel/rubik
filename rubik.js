@@ -269,16 +269,54 @@ function addVertices(mesh) {
 // added to the corresponding faces. Could probably just call the
 // the updateCubies function... oh well...
 function makeCube() {
+  var Cubie ;
   for(var i = -1 ; i < 2 ; i++)
       for(var j = -1 ; j < 2 ; j++)
           for(var k = -1 ; k < 2 ; k++) {
-              rubiksCube.push(addCubie({side:2.7,posX:3*i,posY:3*j,posZ:3*k})) ;
+              Cubie = addCubie({side:2.7,posX:3*i,posY:3*j,posZ:3*k}) ;
+              rubiksCube.push(Cubie) ;
               if(i == -1) faces["L"].push(rubiksCube[rubiksCube.length-1]) ;
               if(i ==  1) faces["R"].push(rubiksCube[rubiksCube.length-1]) ;
               if(j == -1) faces["D"].push(rubiksCube[rubiksCube.length-1]) ;
               if(j ==  1) faces["U"].push(rubiksCube[rubiksCube.length-1]) ;
               if(k == -1) faces["B"].push(rubiksCube[rubiksCube.length-1]) ;
               if(k ==  1) faces["F"].push(rubiksCube[rubiksCube.length-1]) ;
+              // console.log(Cubie.geometry.vertices) ;
+              //var position = new THREE.Vector3(0,0,0);
+              Cubie.updateMatrixWorld() ;
+              // Make the inner cubie faces black
+              // ... this code is ugly and messy, but it works...
+              // (to be improved)
+              Cubie.geometry.faces.forEach(
+                  function(f) {
+                    var position = new THREE.Vector3(0,0,0);
+                    var centroid = new THREE.Vector3(0,0,0);
+                    //Cubie.updateMatrixWorld() ;
+
+                    //calculat the centroid of each triangle face
+                    var v1 = Cubie.geometry.vertices[ f.a ];
+                    var v2 = Cubie.geometry.vertices[ f.b ];
+                    var v3 = Cubie.geometry.vertices[ f.c ];
+                    centroid.x = ( v1.x + v2.x + v3.x ) / 3;
+                    centroid.y = ( v1.y + v2.y + v3.y ) / 3;
+                    centroid.z = ( v1.z + v2.z + v3.z ) / 3;
+                    // position.add(Cubie.geometry.vertices[1]) ;
+                    position.add(centroid) ;
+                    centroid.applyMatrix4(Cubie.matrixWorld) ;
+                    centroid.multiply(centroid) ;
+                    // If any of the (x,y,z) coordinates of a
+                    // is smaller (sufficiently, beware of rounding)
+                    // than the maximum distance, than that face is
+                    // and inner face. Cross product is a trick to
+                    // get all positive values.
+                    // 18.9 = 4.37 * 4.37 sligth smaller than max
+                    // distance. 
+                    if(Math.max(...centroid.toArray()) < 18.9) {
+                      f.color.set("black") ;
+                      //console.log(Math.max(...centroid.toArray())) ;
+                    }
+                  }
+              )
               //group.add(rubiksCube[rubiksCube.length-1]) ;
             }
 }
@@ -309,6 +347,7 @@ function addCubie(data) {
         {
           // cubeGeometry.faces[i].color.setHex( Math.random() * 0xffffff ) ;
           cubeGeometry.faces[i].color.set(rubikColors[i]);
+          // debugger ;
         }
 
     var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors}) ;
