@@ -303,11 +303,11 @@ function makeCube() {
                     // position.add(Cubie.geometry.vertices[1]) ;
                     position.add(centroid) ;
                     centroid.applyMatrix4(Cubie.matrixWorld) ;
-                    centroid.multiply(centroid) ;
+                    centroid.multiply(centroid) ; // (x*x,y*y,z*z)
                     // If any of the (x,y,z) coordinates of a
                     // is smaller (sufficiently, beware of rounding)
                     // than the maximum distance, than that face is
-                    // and inner face. Cross product is a trick to
+                    // and inner face. Vector product is a trick to
                     // get all positive values.
                     // 18.9 = 4.37 * 4.37 sligth smaller than max
                     // distance. 
