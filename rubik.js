@@ -14,41 +14,39 @@
 
 //"use strict" ;
 //global variables
+var CUBIE_WIDTH = 2.7 ;
+var CUBIE_GAP = 0.15 ;
 var renderer ;
 var scene ;
 var camera ;
 var stats ;
-var speed = 0.01 ;
-//var spotLight ;
-var timer = 0 ;
-var group = new THREE.Group() ;
+var deltaRot ;
 var rubiksCube = [] ;
-var faces = {} ;
-var cube ;
-var pivot = new THREE.Object3D() ;
-var isMoving = false ;
-var isSolving = false ;
-var activeAxis ;
-var deltaRot = 0.05 ;
 var activeCubies = [] ;
 var moveStack = [] ;
 var moveList = [] ;
+var faces = { "L" : [] ,"R" : [] ,"D" : [] ,"U" : [] ,"B" : [] ,"F" : [] } ;
+var isMoving = false ;
+var isSolving = false ;
 var keyDown = false ;
+var activeAxis ;
+var pivot = new THREE.Object3D() ;
 var theAxes = new THREE.Object3D() ;
 
 function init() {
     //three.js initialization code
     scene = new THREE.Scene() ;
-
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight,0.1,1000);
-
     renderer = new THREE.WebGLRenderer({ antialias : true}) ;
     renderer.setClearColor(0x000000,1.0) ;
     renderer.setSize(window.innerWidth,window.innerHeight) ;
     renderer.shadowMap.enabled = true ;
 
-    // Scene elements
+    ///// Scene elements
+    
+    // pivot object for face rotation
     scene.add(pivot) ;
+
     // plane
     var planeGeometry = new THREE.PlaneGeometry(20,20) ;
     var planeMaterial = new THREE.MeshLambertMaterial({color: 0xcccccc}) ;
@@ -61,24 +59,27 @@ function init() {
     // scene.add(plane) ;
 
 
-    faces = {
-      "L" : [] ,
-      "R" : [] ,
-      "D" : [] ,
-      "U" : [] ,
-      "B" : [] ,
-      "F" : [] ,
-    }
-    // var cc = addCubie({side:2.7,posX:0,posY:0,posZ:0}) ;
-    var xAxis = new THREE.Vector3(1,0,0) ;
-    var yAxis = new THREE.Vector3(0,1,0) ;
-    var zAxis = new THREE.Vector3(0,0,1) ;
-    qt = new THREE.Quaternion();
-    // qc = new THREE.Quaternion();
-    qt.setFromAxisAngle(xAxis,0.25 * Math.PI) ;
+  //  faces = {
+  //     "L" : [] ,
+  //     "R" : [] ,
+  //     "D" : [] ,
+  //      "U" : [] ,
+  //     "B" : [] ,
+  //     "F" : [] ,
+  //   }
 
-    //scene.add(group) ;
-    // group.setRotationFromQuaternion(qt) ;
+    // // var cc = addCubie({side:2.7,posX:0,posY:0,posZ:0}) ;
+    // var xAxis = new THREE.Vector3(1,0,0) ;
+    // var yAxis = new THREE.Vector3(0,1,0) ;
+    // var zAxis = new THREE.Vector3(0,0,1) ;
+    // qt = new THREE.Quaternion();
+    // // qc = new THREE.Quaternion();
+    // qt.setFromAxisAngle(xAxis,0.25 * Math.PI) ;
+
+    // //scene.add(group) ;
+    // // group.setRotationFromQuaternion(qt) ;
+
+    // The cube itself
     makeCube() ;
 
     // Camera
@@ -87,10 +88,7 @@ function init() {
     camera.position.z = 13 ;
     camera.lookAt(scene.position) ;
 
-    // Axes
-    // Should be a function.
-
-
+    // World axes
     var cylinderGeometry = new THREE.CylinderGeometry(0.1,0.1,10,20) ;
     var redLambertMaterial = new THREE.MeshLambertMaterial({color : 0xff0000}) ;
     var greenLambertMaterial = new THREE.MeshLambertMaterial({color : 0x00ff00}) ;
@@ -143,9 +141,10 @@ function init() {
     orbitControl.maxPolarAngle = Math.PI ;
     orbitControl.minPolarAngle = 0 ;
     document.body.appendChild(renderer.domElement) ;
+
     //document.body.appendChild(info) ;
+    
     addStatsObject() ;
-    // addVertices(cube);
 
     setupControlButtons() ;
 
@@ -277,46 +276,48 @@ function makeCube() {
   for(var i = -1 ; i < 2 ; i++)
       for(var j = -1 ; j < 2 ; j++)
           for(var k = -1 ; k < 2 ; k++) {
-              Cubie = addCubie({side:2.7,posX:3*i,posY:3*j,posZ:3*k}) ;
+              Cubie = addCubie({side:CUBIE_WIDTH,posX:(CUBIE_GAP+CUBIE_WIDTH)*i,posY:(CUBIE_GAP+CUBIE_WIDTH)*j,posZ:(CUBIE_GAP+CUBIE_WIDTH)*k}) ;
               rubiksCube.push(Cubie) ;
-              if(i == -1) faces["L"].push(rubiksCube[rubiksCube.length-1]) ;
-              if(i ==  1) faces["R"].push(rubiksCube[rubiksCube.length-1]) ;
-              if(j == -1) faces["D"].push(rubiksCube[rubiksCube.length-1]) ;
-              if(j ==  1) faces["U"].push(rubiksCube[rubiksCube.length-1]) ;
-              if(k == -1) faces["B"].push(rubiksCube[rubiksCube.length-1]) ;
-              if(k ==  1) faces["F"].push(rubiksCube[rubiksCube.length-1]) ;
+              // Add cubie to the right faces
+              if(i == -1) faces["L"].push(Cubie) ;
+              if(i ==  1) faces["R"].push(Cubie) ;
+              if(j == -1) faces["D"].push(Cubie) ;
+              if(j ==  1) faces["U"].push(Cubie) ;
+              if(k == -1) faces["B"].push(Cubie) ;
+              if(k ==  1) faces["F"].push(Cubie) ;
               // console.log(Cubie.geometry.vertices) ;
               //var position = new THREE.Vector3(0,0,0);
-              Cubie.updateMatrixWorld() ;
+              
               // Make the inner cubie faces black
               // ... this code is ugly and messy, but it works...
               // (to be improved)
+              Cubie.updateMatrixWorld() ; // I don't know why this is required...
               Cubie.geometry.faces.forEach(
                   function(f) {
                     var position = new THREE.Vector3(0,0,0);
                     var centroid = new THREE.Vector3(0,0,0);
-                    //Cubie.updateMatrixWorld() ;
 
-                    //calculat the centroid of each triangle face
+                    // calculate the centroid of each triangle face
                     var v1 = Cubie.geometry.vertices[ f.a ];
                     var v2 = Cubie.geometry.vertices[ f.b ];
                     var v3 = Cubie.geometry.vertices[ f.c ];
                     centroid.x = ( v1.x + v2.x + v3.x ) / 3;
                     centroid.y = ( v1.y + v2.y + v3.y ) / 3;
                     centroid.z = ( v1.z + v2.z + v3.z ) / 3;
-                    // position.add(Cubie.geometry.vertices[1]) ;
-                    position.add(centroid) ;
+                    // Trasnform centroid to world coordinates
                     centroid.applyMatrix4(Cubie.matrixWorld) ;
-                    centroid.multiply(centroid) ; // (x*x,y*y,z*z)
+                    // Entrywise multiply centroid (x*x,y*y,z*z)
+                    centroid.multiply(centroid) ; // Hadamard vector product
                     // If any of the (x,y,z) coordinates of a
                     // is smaller (sufficiently, beware of rounding)
                     // than the maximum distance, than that face is
-                    // and inner face. Vector product is a trick to
-                    // get all positive values.
-                    // 18.9 = 4.37 * 4.37 sligth smaller than max
-                    // distance. 
-                    if(Math.max(...centroid.toArray()) < 18.9) {
-                      f.color.set("black") ;
+                    // and inner face. Entrywise vector product is 
+                    // to ensure all positive values and comparison
+                    // is made with the square of the maximum distance.
+                    // 
+                    var maxDist = 1.5*CUBIE_WIDTH+CUBIE_GAP-0.01 ; // 0.01 - rounding safety
+                    if(Math.max(...centroid.toArray()) < (maxDist*maxDist)) {
+                      f.color.set("gray") ;
                       //console.log(Math.max(...centroid.toArray())) ;
                     }
                   }
@@ -402,15 +403,17 @@ function rotateFace(rot,faces,obj) {
     return ;
   }
   // The below code is required because the rotation request in the solving
-  // mode are assynchronous to the rendering process, so normal flags don't
+  // mode is assynchronous to the rendering process, so normal flags don't
   // work inside the render function...
   // The solving function appends an 's' to each rotation to signal it's a
-  // a solving move and should not be added to the stack
+  // a solving move rotation and should not be added to the stack
   if(rot.length <2) { // Only push if there isn't a suffix
     moveList.push(rot) ;
     console.log("Shouldn't be here!") ;
   }
   rot = rot[0] ; // get rid of the suffix if it's there.
+
+  // reset the pivot object
   obj.rotation.set(0,0,0) ;
   obj.updateMatrixWorld() ;
 
@@ -438,50 +441,6 @@ function rotateFace(rot,faces,obj) {
   // setting the isMoving flag to "true" will activate the render code
 }
 
-
-
-
-function rotateFace2(rot,faces,obj) {
-  var axis = {"R": "x","L":"x","U":"y","D":"y","B":"z","F":"z"} ;
-  var s = 1 ;
-  var p = 1 ;
-
-  activeAxis = axis[rot] ; // this needs to be passed to the render function
-
-  //if(isMoving) return() ;
-
-  obj.rotation.set(0,0,0) ;
-  obj.updateMatrixWorld() ;
-
-  if(rot == rot.toLowerCase()) p = -1 ;
-  rot = rot.toUpperCase() ;
-  activeCubies = faces[rot] ;
-  //console.log(activeCubies) ;
-  if(!["R","L","U","D","B","F"].includes(rot)) {
-    alert(rot+" is not a valid rotation!") ;
-    debugger;
-  }
-  if(["L","D","B"].includes(rot)) s = -1 ;
-
-  // atach active cubies to the pivot ;
-  for ( var i=0 ; i < faces[rot].length ; i++ ) {
-        //THREE.SceneUtils.attach(faces["L"][i], scene,pivot  );
-        obj.add(faces[rot][i]) ;
-  }
-  deltaRot = -s*p*0.02 ;
-  // rotate the pivot around the proper axis
-  obj.rotation[axis[rot]] += -0.5*Math.PI * s * p ,0,0  ;
-  obj.updateMatrixWorld();
-
-//detach active cubies from the pivot and attach them to the scene
-  for (var i=0 ; i < faces[rot].length ; i++ ) {
-      faces[rot][i].updateMatrixWorld(); // if not done by the renderer
-      THREE.SceneUtils.detach( faces[rot][i], obj, scene );
-      scene.add(faces[rot][i]) ;
-  }
-  obj.updateMatrixWorld();
-  scene.remove(obj) ;
-}
 
 axesOnOff.toggleAxes = true ;
 function axesOnOff() {
