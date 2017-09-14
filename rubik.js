@@ -1,3 +1,7 @@
+// Javascript three.js Rubik's Cube Simulator
+// --Paulo Martel 2017
+// 
+
 // Create heading at top of page
 // var info = document.createElement('div') ;
 // info.style.position = 'absolute';
