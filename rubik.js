@@ -25,13 +25,28 @@ var rubiksCube = [] ;
 var activeCubies = [] ;
 var moveStack = [] ;
 var moveList = [] ;
-var faces = { "L" : [] ,"R" : [] ,"D" : [] ,"U" : [] ,"B" : [] ,"F" : [] } ;
 var isMoving = false ;
 var isSolving = false ;
 var keyDown = false ;
 var activeAxis ;
 var pivot = new THREE.Object3D() ;
 var theAxes = new THREE.Object3D() ;
+
+// Object holding current cubies on each face
+// NB: the middle slices M, E and S are considered faces
+// the same codes are used for the corresponding rotations,
+// where upper case is clockwise and lower anticlockwise
+faces = {
+  "L" : [] ,
+  "R" : [] ,
+  "D" : [] ,
+  "U" : [] ,
+  "B" : [] ,
+  "F" : [] ,
+  "M" : [] ,
+  "E" : [] ,
+  "S" : [] ,  
+}
 
 function init() {
     //three.js initialization code
@@ -174,6 +189,9 @@ function resetCube() {
   faces["U"] = [] ;
   faces["B"] = [] ;
   faces["F"] = [] ;
+  faces["M"] = [] ;
+  faces["E"] = [] ;
+  faces["S"] = [] ;
   //scene.remove(pivot) ;
   moveStack = [] ;
   moveList = [] ;
@@ -285,6 +303,9 @@ function makeCube() {
               if(j ==  1) faces["U"].push(Cubie) ;
               if(k == -1) faces["B"].push(Cubie) ;
               if(k ==  1) faces["F"].push(Cubie) ;
+              if(i ==  0) faces["M"].push(Cubie) ;
+              if(j ==  0) faces["E"].push(Cubie) ;
+              if(k ==  0) faces["S"].push(Cubie) ;
               // console.log(Cubie.geometry.vertices) ;
               //var position = new THREE.Vector3(0,0,0);
               
@@ -375,7 +396,10 @@ function updateCubies(temp) {  //given that rubiksCube is a global variable,
   faces["U"] = [] ;
   faces["B"] = [] ;
   faces["F"] = [] ;
-
+  faces["M"] = [] ;
+  faces["E"] = [] ;
+  faces["S"] = [] ;
+  
   for(i=0 ; i < temp.length ; i++) {
       var r = temp[i] ;
       // determine which face array each cubie belongs to
@@ -386,13 +410,16 @@ function updateCubies(temp) {  //given that rubiksCube is a global variable,
       if(r.position.y > 1) faces["U"].push(r) ;
       if(r.position.z < -1) faces["B"].push(r) ;
       if(r.position.z > 1) faces["F"].push(r) ;
+      if(r.position.x > -0.5 && r.position.x < 0.5) faces["M"].push(r) ;
+      if(r.position.y > -0.5 && r.position.y < 0.5) faces["E"].push(r) ;
+      if(r.position.z > -0.5 && r.position.z < 0.5) faces["S"].push(r) ;
       //group.add(r) ;
   }
   //scene.add(group) ;
 }
 
 function rotateFace(rot,faces,obj) {
-  var axis = {"R": "x","L":"x","U":"y","D":"y","B":"z","F":"z"} ;
+  var axis = {"R": "x","L":"x","U":"y","D":"y","B":"z","F":"z","M":"x","E":"y","S":"z"} ;
   var s = 1 ;
   var p = 1 ;
 
@@ -423,11 +450,13 @@ function rotateFace(rot,faces,obj) {
   activeAxis = axis[rot] ; // this needs to be passed to the render function
 
   // Check for invalid rotations (lower case is already taken care of)
-  if(!["R","L","U","D","B","F"].includes(rot)) {
+  if(!["R","L","U","D","B","F","M","E","S"].includes(rot)) {
     alert(rot+" is not a valid rotation!") ;
     debugger;
   }
-  if(["L","D","B"].includes(rot)) s = -1 ;
+  // Rotations that must be reversed to comply
+  // with standard WCA convention
+  if(["L","D","B","M","E"].includes(rot)) s = -1 ;
 
   // atach active cubies to the pivot ;
   for ( var i=0 ; i < faces[rot].length ; i++ ) {
@@ -480,7 +509,7 @@ function setupControlButtons() {
 }
 
 function readKeys(event) {
-  var keys = ["L","R","D","U","B","F"] ;
+  var keys = ["L","R","D","U","B","F","M","E","S"] ;
   var keyPressed ;
 
   if(keyDown) return ;
