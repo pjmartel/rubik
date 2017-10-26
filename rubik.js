@@ -519,7 +519,7 @@ function blockRepeat(event) {
 }
 
 function helpFunction() {
-    window.alert("Use the following keys for rotation: L,R,D,U,B,F (+shift for inverse rotations)") ;
+    window.alert("Use the following keys for rotation: L,R,D,U,B,F,M,E,S (+shift for inverse rotations)") ;
 }
 
 
